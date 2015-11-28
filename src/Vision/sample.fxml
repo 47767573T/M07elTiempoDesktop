@@ -1,8 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.layout.GridPane?>
-
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<GridPane fx:controller="Control.Controller"
-          xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10">
-</GridPane>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
+    <children>
+        <ListView fx:id="listViewGeneral" layoutX="213.0" layoutY="19.0" prefHeight="297.0" prefWidth="373.0" />
+        <Button fx:id="bAceptar" layoutX="14.0" layoutY="332.0" mnemonicParsing="false" onAction="#metodoAceptar" prefHeight="55.0" prefWidth="171.0" text="Aceptar" />
+        <TextField fx:id="textFieldCiudad" layoutX="14.0" layoutY="51.0" promptText="Introduzca ciudad" />
+        <Label fx:id="labelCiudad" layoutX="14.0" layoutY="19.0" prefHeight="26.0" prefWidth="104.0" text="Ciudad:" />
+        <Label layoutX="14.0" layoutY="110.0" prefHeight="26.0" prefWidth="104.0" text="Dias (max 16):" />
+        <TextField fx:id="textFieldDies" layoutX="14.0" layoutY="139.0" promptText="7" />
+        <TextField fx:id="mediaTempMinimaController" editable="false" layoutX="213.0" layoutY="347.0" />
+        <TextField fx:id="mediaTempMaximaController" editable="false" layoutX="400.0" layoutY="349.0" />
+        <Label layoutX="213.0" layoutY="329.0" text="Temeperatura media minima:" />
+        <Label layoutX="400.0" layoutY="332.0" text="Temeperatura media maxima:" />
+    </children>
+</AnchorPane>

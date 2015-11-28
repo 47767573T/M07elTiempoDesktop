@@ -1,9 +1,6 @@
 package Control;
 
 
-import Modelo.createSQLite;
-import Modelo.insertSQLite;
-import Modelo.selectSQLite;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -12,106 +9,53 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.ArrayList;
 
 
 public class ControlDB {
 
-
-    static Random rnd = new Random();   //Crear nombres de base de datos aleatorias
-
-    public static String ficheroDB = "jdbc:sqlite:moviesDB"+rnd.nextInt(5000)+".db";
-    public static String nombreTablaPeliculas = "PELICULAS";
-    public static String nombreTablaActores = "ACTORES";
-    public static int lastIdCast = 1;
-    public static int idIniPelicula = 600;
-    public static int numPeliculas = 100;
-
-
-    public static void main(String[] args) {
-        Scanner scn = new Scanner(System.in);
-
-        //:::::::::::::::::::::::::::::::::::::::PREPARAMOS Y CREAMOS LA TABLA ANTES DE INSERTAR REGISTROS
-        String s = "";
-        String api_key = "e6f2c549601727fca2e90f4291bbe34d";
-
-        createSQLite.createTabla();
+    public static String baseURL = "http://api.openweathermap.org/data/2.5/forecast/daily?q=";
+    public static String ciudad = "Barcelona";
+    public static String pais;
+    public static ArrayList <String> tMax;
+    public static ArrayList <String> tMin;
+    public static ArrayList <String> tMed;
+    public static ArrayList <String> estado;
+    public static String appID = "f50a8337632b64b69714d5b175384000";
 
 
-        //:::::::::::::::::::::::::::::::::::::::INTRODUCIMOS LOS REGISTROS
-        for (int i = 0; i < numPeliculas; i++) {
-            int peliculaIndex = idIniPelicula + i;
-            String peliculaID = String.valueOf(peliculaIndex);
-            String actoresURL = "https://api.themoviedb.org/3/movie/" + peliculaID + "/credits?api_key=" + api_key;
-            String peliculasURL = "https://api.themoviedb.org/3/movie/" + peliculaID + "?api_key=" + api_key;
-            try {
+    public void meteoPeticion(String ciudad, int nDias) {
+        this.ciudad = ciudad;
 
-                s = getHTML(peliculasURL);
-                jsonToTablaPelis(s, peliculaIndex);
-                s = getHTML(actoresURL);
-                jsonToTablaActores(s, peliculaIndex);
+        String jsonPeticion = null;
+        String url = baseURL+ciudad+"&mode=json&units=metric&cnt="+nDias+"&appid="+appID;
 
-
-            } catch (Exception e) {
-                System.out.println("La peli " + peliculaID + " no existeix ");
-            }
+        try {
+            jsonPeticion = getHTML(url);
+        } catch (Exception e) {
+            System.out.println("No existe la ciudad");
         }
-                //::::::::::::::::::::::::::::::::::::::::GENERAMOS LOS 2 MODOS DE CONSULTA
-                //MODO 1:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-                System.out.println("\nQUERY MODO 1:\n");
 
-                System.out.println("Listado de peliculas: ");
-                selectSQLite.movieList();
+        assert jsonPeticion != null;
+        JSONObject meteoObj = (JSONObject) JSONValue.parse(jsonPeticion);
 
-                System.out.println("Elija un ID de la pelicula del listado");
-                int idPeli = scn.nextInt();
-                selectSQLite.query1(idPeli);
+        //Extraemos los valores que nos intresan del JSON
+        JSONArray meteoAL = (JSONArray) meteoObj.get("list");    //Listado con temperaturas y humedad
+        pais = (String)meteoObj.get("country");
 
+        for (int i = 0; i < meteoAL.size(); i++) {
+            JSONObject meteoDay = (JSONObject) meteoAL.get(i);              //Objeto de la meteorologia diaria
+            JSONObject meteoTemp = (JSONObject) meteoDay.get("temp");       //Objeto de la temperatura diaria
+            JSONObject meteoEstado = (JSONObject) meteoDay.get("weather");  //Objeto del estado diario
 
-                //MODO 2:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-                System.out.println("\nQUERY MODO 1:\n");
-                System.out.println("");
-                selectSQLite.actorList();
+            tMax.add((String) meteoTemp.get("min"));
+            tMin.add((String) meteoTemp.get("max"));
+            tMed.add((String) meteoTemp.get("day"));
 
-                System.out.println("Elija un ID del actor del listado");
-                int idActor = scn.nextInt();
-                selectSQLite.query2(idActor);
-    }
-
-
-    public static void jsonToTablaPelis (String cadena, int id){
-
-        Object jsonObj = JSONValue.parse(cadena);
-        JSONObject jsonItem=(JSONObject)jsonObj;
-        String titulo = (String) jsonItem.get("original_title");
-        String tituloCorregido = correctComillas(titulo);
-
-        String fecha = (String) jsonItem.get("release_date");
-
-        insertSQLite.insertTablaPelis(id, tituloCorregido, fecha);
-    }
-
-    public static void jsonToTablaActores (String cadena, int idPeli){
-        Object jsonObj = JSONValue.parse(cadena);
-        JSONObject jsonItem=(JSONObject)jsonObj;
-        JSONArray casting = (JSONArray)jsonItem.get("cast");
-
-        for (int i = 0; i < casting.size(); i++) {
-
-            JSONObject jo= (JSONObject)casting.get(i);
-            String nombre = (String) jo.get("name");
-            String nombreCorregido = correctComillas(nombre);
-
-            long actor = (long) jo.get("id");
-            String personaje = (String) jo.get("character");
-            String personajeCorregido = correctComillas(personaje);
-
-            insertSQLite.insertTablaActores(lastIdCast, nombreCorregido, actor, personajeCorregido, idPeli);
-            lastIdCast++;
-
+            estado.add((String) meteoEstado.get("main"));
         }
     }
+
 
     public static String getHTML(String urlToRead) throws Exception {
         StringBuilder result = new StringBuilder();
@@ -126,16 +70,4 @@ public class ControlDB {
         rd.close();
         return result.toString();
     }
-
-    public static String correctComillas (String fraseConComillas){
-        String comillas = "\'";
-
-        if (fraseConComillas.contains(comillas)) {
-        String fraseSinComillas = fraseConComillas.replace(comillas,"\"");
-            return fraseSinComillas;
-        }
-
-        return fraseConComillas;
-    }
-
 }
